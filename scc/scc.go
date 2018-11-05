@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sort"
 	"time"
 )
 
@@ -54,6 +55,7 @@ func (this *Stack) Push(value interface{}) {
 
 //
 
+// Código facilitado por el profesor
 type Node struct {
 	label     int
 	visited   bool
@@ -148,45 +150,55 @@ func getMax(lis2 [][2]int) (n int) {
 	return n
 }
 
-func (g *Graph) dfs(node *Node) {
-	if node.visited != true {
-		node.visited = true
-		fmt.Printf("%d ", node.label)
-		if len(node.neighbors) != 0 {
-			for _, v := range node.neighbors {
-				g.dfs(v)
+func (g *Graph) dfs(node *Node) int {
+	node.visited = true
+
+	count := 0
+
+	fmt.Printf("%d ", node.label)
+
+	if len(node.neighbors) != 0 {
+		for _, v := range node.neighbors {
+			if v.visited == false {
+				count += g.dfs(v)
 			}
-		} else {
-			return
-		}
-	}
-}
-
-func (g *Graph) fillOrder(v int, stack *Stack) {
-	g.nodes[v].visited = true
-
-	for i := 0; i < len(g.nodes[v].neighbors); i++ {
-		n := i + 1
-		if !g.nodes[n].visited {
-			g.fillOrder(n, stack)
 		}
 	}
 
-	stack.Push(v)
+	return count + 1
 }
 
+//
+
+// Se visita un nodo y se comprueban todos los nodos a los que se puede llegar desde aquí, luego de terminar de un nodo,
+// se guarda en el stack
+func (g *Graph) fillOrder(node *Node, stack *Stack) {
+	node.visited = true
+
+	if len(node.neighbors) != 0 {
+		for _, v := range node.neighbors {
+			if v.visited == false {
+				g.fillOrder(v, stack)
+			}
+		}
+	}
+
+	stack.Push(node.label - 1)
+
+	//fmt.Println("PEEK:", (stack.Peek()).(int))
+}
+
+// Función que se encarga de procesar e imprimir los SCC resultantes
 func (g *Graph) printSCC(lisnod [][2]int, start time.Time) {
 	stack := NewStack()
 
-	fmt.Println(len(g.nodes))
+	n := make([]int, 5)
+	index := 0
+	count := 0
 
 	for i := 0; i < len(g.nodes); i++ {
-		g.nodes[i].visited = false
-	}
-
-	for i := 0; i < len(g.nodes); i++ {
-		if g.nodes[i].visited == false {
-			g.fillOrder(i+1, stack)
+		if g.getNode(i+1).visited == false {
+			g.fillOrder(g.getNode(i+1), stack)
 		}
 	}
 
@@ -195,18 +207,36 @@ func (g *Graph) printSCC(lisnod [][2]int, start time.Time) {
 	gr.creatGraph(lisnod, true, start)
 	//
 
-	for i := 0; i < len(g.nodes); i++ {
-		g.nodes[i].visited = false
-	}
-
 	for stack.Len() > 0 {
-		v := (stack.Pop()).(int)
+		v := (stack.Pop()).(int) + 1
 
-		if !g.nodes[v-1].visited {
-			gr.dfs(gr.getNode(v))
+		//fmt.Println("POP: ", v)
+		//fmt.Println("NODO: ", gr.getNode(v).label)
+
+		if gr.getNode(v).visited == false {
+			fmt.Print("SCC: ")
+			count = gr.dfs(gr.getNode(v))
+			if index < 5 {
+				n[index] = count
+				index = index + 1
+			}
 			fmt.Println()
 		}
 	}
+
+	sort.Sort(sort.Reverse(sort.IntSlice(n)))
+
+	fmt.Print("Los 5 SCC más grandes: ")
+
+	for i := 0; i < 5; i++ {
+		if i != 4 {
+			fmt.Print(n[i], ", ")
+		} else {
+			fmt.Print(n[i])
+		}
+	}
+
+	fmt.Println()
 }
 
 func main() {
@@ -248,9 +278,7 @@ func main() {
 	elapsed = time.Since(start)
 	fmt.Printf("Nodos %10d Creating  %s\n", len(pg.nodes), elapsed)
 	pg.display()
-	/*
-		pg.dfs(pg.nodes[0])
-	*/
+	//pg.dfs(pg.nodes[0])
 	pg.printSCC(lisnod, start)
 	elapsed = time.Since(start)
 	fmt.Printf("Finish time %s \n", elapsed)
