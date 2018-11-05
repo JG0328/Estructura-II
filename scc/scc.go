@@ -8,6 +8,52 @@ import (
 	"time"
 )
 
+// Implementación del Stack
+type (
+	Stack struct {
+		top    *stackNode
+		length int
+	}
+	stackNode struct {
+		value interface{}
+		prev  *stackNode
+	}
+)
+
+func NewStack() *Stack {
+	return &Stack{nil, 0}
+}
+
+func (this *Stack) Len() int {
+	return this.length
+}
+
+func (this *Stack) Peek() interface{} {
+	if this.length == 0 {
+		return nil
+	}
+	return this.top.value
+}
+
+func (this *Stack) Pop() interface{} {
+	if this.length == 0 {
+		return nil
+	}
+
+	n := this.top
+	this.top = n.prev
+	this.length--
+	return n.value
+}
+
+func (this *Stack) Push(value interface{}) {
+	n := &stackNode{value, this.top}
+	this.top = n
+	this.length++
+}
+
+//
+
 type Node struct {
 	label     int
 	visited   bool
@@ -103,10 +149,9 @@ func getMax(lis2 [][2]int) (n int) {
 }
 
 func (g *Graph) dfs(node *Node) {
-
 	if node.visited != true {
 		node.visited = true
-		fmt.Println(node.label)
+		fmt.Printf("%d ", node.label)
 		if len(node.neighbors) != 0 {
 			for _, v := range node.neighbors {
 				g.dfs(v)
@@ -115,7 +160,53 @@ func (g *Graph) dfs(node *Node) {
 			return
 		}
 	}
+}
 
+func (g *Graph) fillOrder(v int, stack *Stack) {
+	g.nodes[v].visited = true
+
+	for i := 0; i < len(g.nodes[v].neighbors); i++ {
+		n := i + 1
+		if !g.nodes[n].visited {
+			g.fillOrder(n, stack)
+		}
+	}
+
+	stack.Push(v)
+}
+
+func (g *Graph) printSCC(lisnod [][2]int, start time.Time) {
+	stack := NewStack()
+
+	fmt.Println(len(g.nodes))
+
+	for i := 0; i < len(g.nodes); i++ {
+		g.nodes[i].visited = false
+	}
+
+	for i := 0; i < len(g.nodes); i++ {
+		if g.nodes[i].visited == false {
+			g.fillOrder(i+1, stack)
+		}
+	}
+
+	// Se crea el inverso
+	gr := newGraph(len(g.nodes))
+	gr.creatGraph(lisnod, true, start)
+	//
+
+	for i := 0; i < len(g.nodes); i++ {
+		g.nodes[i].visited = false
+	}
+
+	for stack.Len() > 0 {
+		v := (stack.Pop()).(int)
+
+		if !g.nodes[v-1].visited {
+			gr.dfs(gr.getNode(v))
+			fmt.Println()
+		}
+	}
 }
 
 func main() {
@@ -152,12 +243,15 @@ func main() {
 	fmt.Printf("Reading took %s\n", elapsed)
 	nr := getMax(lisnod)
 	fmt.Printf("Entradas %10d  Nodos %10d\n", len(lisnod), nr)
-	pg = newGraph(nr + 1)
+	pg = newGraph(nr)
 	pg.creatGraph(lisnod, false, start)
 	elapsed = time.Since(start)
 	fmt.Printf("Nodos %10d Creating  %s\n", len(pg.nodes), elapsed)
 	pg.display()
-	pg.dfs(pg.nodes[0])
+	/*
+		pg.dfs(pg.nodes[0])
+	*/
+	pg.printSCC(lisnod, start)
 	elapsed = time.Since(start)
 	fmt.Printf("Finish time %s \n", elapsed)
 }
