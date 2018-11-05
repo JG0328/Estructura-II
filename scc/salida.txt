@@ -1,0 +1,116 @@
+#1 Archivo utilizado: scctest.txt
+
+Reading took 0s
+Entradas          5  Nodos          5
+Nodos          5 Creating  0s
+       1 -->        3        4
+       3 -->        2
+       2 -->        1
+       4 -->        5
+       5 -->
+SCC: 1 2 3
+SCC: 4
+SCC: 5
+Los 5 SCC más grandes: 3, 1, 1, 0, 0
+Finish time 1.0032ms
+
+#2 Archivo utilizado: scctest2.txt
+
+Reading took 0s
+Entradas         14  Nodos          8
+Nodos          8 Creating  0s
+       1 -->        2
+       2 -->        5        6        3
+       5 -->        1        6
+       6 -->        7
+       3 -->        4        7
+       4 -->        3        8
+       7 -->        6
+       8 -->        4        7
+SCC: 1 5 2
+SCC: 3 4 8
+SCC: 6 7
+Los 5 SCC más grandes: 3, 3, 2, 0, 0
+Finish time 2.991ms
+
+#3 Archivo utilizado: scc10.txt
+
+Reading took 0s
+Entradas         15  Nodos         10
+Nodos         10 Creating  0s
+       1 -->        2
+       2 -->        3
+       3 -->        1        4
+       4 -->        2        3        5
+       5 -->        6        8
+       6 -->        7
+       8 -->        4
+       7 -->        9
+       9 -->        8       10
+      10 -->        8
+SCC: 1 3 2 4 8 5 9 7 6 10
+Los 5 SCC más grandes: 10, 0, 0, 0, 0
+Finish time 4.9983ms
+
+#4 Archivo utilizado: scc14.txt
+
+Reading took 0s
+Entradas         19  Nodos         14
+Nodos         14 Creating  999.7µs
+       1 -->        6        5       12
+       6 -->        9       13
+       5 -->        8
+      12 -->
+       2 -->        5        9
+       9 -->
+       3 -->        6       10        7
+      10 -->       11       12
+       7 -->        6
+       4 -->        3        7       14
+      14 -->
+       8 -->
+      13 -->       10
+      11 -->       14
+SCC: 4
+SCC: 3
+SCC: 7
+SCC: 2
+SCC: 1
+SCC: 5
+SCC: 8
+SCC: 6
+SCC: 13
+SCC: 10
+SCC: 12
+SCC: 11
+SCC: 14
+SCC: 9
+Los 5 SCC más grandes: 1, 1, 1, 1, 1
+Finish time 15.9962ms
+
+#5 Archivo utilizado: scc29.txt
+
+Reading took 0s
+Entradas         28  Nodos         14
+Nodos         14 Creating  1.0002ms
+       1 -->        2        3        7
+       2 -->        4        8
+       3 -->        5        6
+       7 -->        6        8
+       4 -->        1        3        7
+       8 -->        6       10       14
+       5 -->        6        9
+       6 -->        9       10
+       9 -->
+      10 -->        9       14
+      14 -->        2       13
+      11 -->        9
+      12 -->       10       11       13
+      13 -->       11
+SCC: 12
+SCC: 1 4 2 14 8 7 10 6 3 5
+SCC: 13
+SCC: 11
+SCC: 9
+Los 5 SCC más grandes: 10, 1, 1, 1, 1
+Finish time 5.999ms
