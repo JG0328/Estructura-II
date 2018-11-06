@@ -1,0 +1,6 @@
+(sp,sp), (it,sp), (be,sp), (dk,sp), (pl,sp), (li,sp), (hu,sp), (ba,sp), (mk,sp), (tr,sp), (md,sp), (mo,sp), (fi,sp), (lv,sp), (az,sp).
+(pt,pt), (fr,pt), (nl,pt), (cz,pt), (at,pt), (hr,pt), (al,pt), (bg,pt), (ua,pt), (lt,pt), (se,pt), (no,pt), (ee,pt), (ge,pt), (am,pt).
+(an,fr), (lu,fr), (ch,fr), (si,fr), (sk,fr), (rs,fr), (el,fr), (ru,fr), (by,fr).
+(de,an), (me,an), (ro,an).
+
+Se utilizaron: 4 colores.
