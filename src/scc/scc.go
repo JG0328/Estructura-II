@@ -1,9 +1,7 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
-	"log"
 	"os"
 	"sort"
 	"time"
@@ -239,47 +237,84 @@ func (g *Graph) printSCC(lisnod [][2]int, start time.Time) {
 	fmt.Println()
 }
 
+func ReadFile(name string) []byte {
+	file, err := os.Open(name)
+
+	if err != nil {
+		fmt.Println(err)
+		return nil
+	}
+	defer file.Close()
+
+	fileinfo, err := file.Stat()
+	if err != nil {
+		fmt.Println(err)
+		return nil
+	}
+
+	filesize := fileinfo.Size()
+	buffer := make([]byte, filesize)
+
+	bytesread, err := file.Read(buffer)
+	if err != nil {
+		fmt.Println(err)
+		return nil
+	}
+
+	fmt.Println("bytes read: ", bytesread)
+
+	return buffer
+}
+
 func main() {
-	start := time.Now()
+	//start := time.Now()
 	name := "SCC.txt"
 	if len(os.Args) > 1 {
 		name = os.Args[1]
 	}
-	file, err := os.Open(name)
-	if err != nil {
-		log.Fatal(err)
+
+	words := ReadFile(name)
+
+	if words == nil {
+		return
 	}
-	defer file.Close()
-	var pg *Graph
-	scanner := bufio.NewScanner(file)
-	if err := scanner.Err(); err != nil {
-		log.Fatal(err)
-	}
-	var lisnod [][2]int
-	var anod [2]int
-	var i int
-	var elapsed time.Duration
-	for scanner.Scan() {
-		lineStr := scanner.Text()
-		fmt.Sscanf(lineStr, "%d %d", &anod[0], &anod[1])
-		lisnod = append(lisnod, anod)
-		i++
-		if i%100000 == 0 {
-			elapsed = time.Since(start)
-			fmt.Printf("%8d %v %8d %8d \n", i, elapsed, anod[0], anod[1])
+
+	/*
+		file, err := os.Open(name)
+		if err != nil {
+			log.Fatal(err)
 		}
-	}
-	elapsed = time.Since(start)
-	fmt.Printf("Reading took %s\n", elapsed)
-	nr := getMax(lisnod)
-	fmt.Printf("Entradas %10d  Nodos %10d\n", len(lisnod), nr)
-	pg = newGraph(nr)
-	pg.creatGraph(lisnod, false, start)
-	elapsed = time.Since(start)
-	fmt.Printf("Nodos %10d Creating  %s\n", len(pg.nodes), elapsed)
-	pg.display()
-	//pg.dfs(pg.nodes[0])
-	pg.printSCC(lisnod, start)
-	elapsed = time.Since(start)
-	fmt.Printf("Finish time %s \n", elapsed)
+		defer file.Close()
+		var pg *Graph
+		scanner := bufio.NewScanner(file)
+		if err := scanner.Err(); err != nil {
+			log.Fatal(err)
+		}
+		var lisnod [][2]int
+		var anod [2]int
+		var i int
+		var elapsed time.Duration
+		for scanner.Scan() {
+			lineStr := scanner.Text()
+			fmt.Sscanf(lineStr, "%d %d", &anod[0], &anod[1])
+			lisnod = append(lisnod, anod)
+			i++
+			if i%100000 == 0 {
+				elapsed = time.Since(start)
+				fmt.Printf("%8d %v %8d %8d \n", i, elapsed, anod[0], anod[1])
+			}
+		}
+		elapsed = time.Since(start)
+		fmt.Printf("Reading took %s\n", elapsed)
+		nr := getMax(lisnod)
+		fmt.Printf("Entradas %10d  Nodos %10d\n", len(lisnod), nr)
+		pg = newGraph(nr)
+		pg.creatGraph(lisnod, false, start)
+		elapsed = time.Since(start)
+		fmt.Printf("Nodos %10d Creating  %s\n", len(pg.nodes), elapsed)
+		pg.display()
+		pg.printSCC(lisnod, start)
+		elapsed = time.Since(start)
+		fmt.Printf("Finish time %s \n", elapsed)
+	*/
 }
