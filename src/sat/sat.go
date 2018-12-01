@@ -57,7 +57,7 @@ func (this *Stack) Push(value interface{}) {
 type Node struct {
 	label     int
 	visited   bool
-	neighbors map[int]*Node
+	neighbors map[int][]*Node
 }
 
 type Graph struct {
@@ -70,12 +70,12 @@ func (g *Graph) dfs(node *Node) int {
 	node.visited = true
 
 	if len(node.neighbors) != 0 {
-		for v := range node.neighbors {
-			if v == (node.label * -1) {
+		for _, v := range node.neighbors[node.label] {
+			if v.label == (node.label * -1) {
 				return 0
 			}
-			if node.neighbors[v].visited == false {
-				g.dfs(node.neighbors[v])
+			if v.visited == false {
+				g.dfs(v)
 			}
 		}
 	}
@@ -90,9 +90,9 @@ func (g *Graph) fillOrder(node *Node, stack *Stack) {
 	node.visited = true
 
 	if len(node.neighbors) != 0 {
-		for v := range node.neighbors {
-			if node.neighbors[v].visited == false {
-				g.fillOrder(node.neighbors[v], stack)
+		for _, v := range node.neighbors[node.label] {
+			if v.visited == false {
+				g.fillOrder(v, stack)
 			}
 		}
 	}
@@ -188,12 +188,12 @@ func (g *Graph) GetNode(label int) *Node {
 func CreateNode(label int) *Node {
 	n := new(Node)
 	n.label = label
-	n.neighbors = make(map[int]*Node)
+	n.neighbors = make(map[int][]*Node)
 	return n
 }
 
 func (g *Graph) AddEdge(nini *Node, nfin *Node) {
-	nini.neighbors[nini.label] = nfin
+	nini.neighbors[nini.label] = append(nini.neighbors[nini.label], nfin)
 }
 
 func CreateGraph(bytesRead []byte, rev bool) *Graph {
