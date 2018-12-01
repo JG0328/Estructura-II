@@ -3,7 +3,8 @@ package main
 import (
 	"fmt"
 	"os"
-	"sort"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -61,14 +62,15 @@ type Node struct {
 }
 
 type Graph struct {
-	nrnodes int
-	nodes   []*Node
+	nodes []*Node
 }
 
+/*
 func (g *Graph) AddNode(n *Node) {
 	g.nodes[g.nrnodes] = n
 	g.nrnodes++
 }
+
 
 func (n *Node) AddEdge(nd *Node) {
 	n.neighbors = append(n.neighbors, nd)
@@ -82,20 +84,6 @@ func (g *Graph) getNode(n int) *Node {
 		}
 	}
 	return nil
-}
-
-func (g *Graph) display() {
-	s := ""
-	for i := 0; i < g.nrnodes; i++ {
-		s += fmt.Sprintf("%8d --> ", g.nodes[i].label)
-		near := g.nodes[i]
-		for j := 0; j < len(near.neighbors); j++ {
-			s += fmt.Sprintf("%8d ", near.neighbors[j].label)
-		}
-		//        s += "\n"
-		fmt.Println(s)
-		s = ""
-	}
 }
 
 func newGraph(n int) (pg *Graph) {
@@ -135,6 +123,7 @@ func (pg *Graph) creatGraph(lsls [][2]int, rev bool, start time.Time) {
 		}
 	}
 }
+*/
 
 func getMax(lis2 [][2]int) (n int) {
 	for _, lis := range lis2 {
@@ -187,6 +176,7 @@ func (g *Graph) fillOrder(node *Node, stack *Stack) {
 }
 
 // Función que se encarga de procesar e imprimir los SCC resultantes
+/*
 func (g *Graph) printSCC(lisnod [][2]int, start time.Time) {
 	stack := NewStack()
 
@@ -236,8 +226,10 @@ func (g *Graph) printSCC(lisnod [][2]int, start time.Time) {
 
 	fmt.Println()
 }
+*/
 
 func ReadFile(name string) []byte {
+	start := time.Now()
 	file, err := os.Open(name)
 
 	if err != nil {
@@ -261,23 +253,117 @@ func ReadFile(name string) []byte {
 		return nil
 	}
 
+	var elapsed time.Duration
+	elapsed = time.Since(start)
+
 	fmt.Println("bytes read: ", bytesread)
+
+	fmt.Printf("Reading took %s\n", elapsed)
 
 	return buffer
 }
 
+func (g *Graph) GetNode(label int) *Node {
+
+	for i := 0; i < len(g.nodes); i++ {
+		if g.nodes[i].label == label {
+			return g.nodes[i]
+		}
+	}
+
+	return nil
+}
+
+func CreateNode(label int) *Node {
+	n := new(Node)
+	n.label = label
+	return n
+}
+
+func (g *Graph) AddEdge(nini *Node, nfin *Node) {
+	nini.neighbors = append(nini.neighbors, nfin)
+}
+
+func CreateGraph(bytesRead []byte) *Graph {
+	nodes := strings.Fields(string(bytesRead))
+
+	start := time.Now()
+
+	g := new(Graph)
+
+	for i := 0; i < len(nodes); i += 2 {
+		labelIni, err := strconv.Atoi(nodes[i])
+		labelFin, err2 := strconv.Atoi(nodes[i+1])
+
+		if err != nil || err2 != nil {
+			fmt.Println("ERROR CREATING THE GRAPH")
+			return nil
+		}
+
+		var nini *Node
+		var nfin *Node
+
+		if g.GetNode(labelIni) == nil {
+			nini = CreateNode(labelIni)
+		} else {
+			nini = g.GetNode(labelIni)
+		}
+		if g.GetNode(labelFin) == nil {
+			nfin = CreateNode(labelFin)
+		} else {
+			nfin = g.GetNode(labelFin)
+		}
+
+		g.AddEdge(nini, nfin)
+	}
+
+	var elapsed time.Duration
+	elapsed = time.Since(start)
+
+	fmt.Printf("Creation took %s\n", elapsed)
+
+	return g
+}
+
+func (g *Graph) AddNode(node *Node) {
+	g.nodes = append(g.nodes, node)
+}
+
+func (g *Graph) Display() {
+	/*
+		s := ""
+		for i := 0; i < len(g.nodes); i++ {
+			s += fmt.Sprintf("%8d --> ", g.nodes[i].label)
+			near := g.nodes[i]
+			for j := 0; j < len(near.neighbors); j++ {
+				s += fmt.Sprintf("%8d ", near.neighbors[j].label)
+			}
+			//        s += "\n"
+			fmt.Println(s)
+			s = ""
+		}
+	*/
+}
+
 func main() {
-	//start := time.Now()
 	name := "SCC.txt"
 	if len(os.Args) > 1 {
 		name = os.Args[1]
 	}
 
-	words := ReadFile(name)
+	bytesRead := ReadFile(name)
 
-	if words == nil {
+	if bytesRead == nil {
 		return
 	}
+
+	gr := CreateGraph(bytesRead)
+
+	if gr == nil {
+		return
+	}
+
+	gr.Display()
 
 	/*
 		file, err := os.Open(name)
