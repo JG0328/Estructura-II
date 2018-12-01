@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math"
 	"os"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -155,75 +154,6 @@ func CreateGraph(bytesRead []byte, rev bool) *Graph {
 
 func (g *Graph) AddNode(node *Node) {
 	g.nodes[node.label] = node
-}
-
-func (g *Graph) TSP(source *Node) float64 {
-	start := time.Now()
-
-	var nodesApart []int
-
-	for i := 0; i < len(g.nodes); i++ {
-		if source != g.nodes[i+1] {
-			nodesApart = append(nodesApart, i+1)
-		}
-	}
-
-	var minPath float64
-	minPath = -1
-
-	for {
-		// Code
-
-		var currentPathWeight float64
-
-		k := source.label
-
-		for i := 0; i < len(nodesApart); i++ {
-			currentPathWeight += g.nodes[k].distances[g.nodes[nodesApart[i]]]
-			k = nodesApart[i]
-		}
-
-		currentPathWeight += g.nodes[k].distances[g.nodes[source.label]]
-
-		minPath = math.Min(minPath, currentPathWeight)
-
-		// Condition
-		if !NextPermutation(sort.IntSlice(nodesApart)) {
-			break
-		}
-	}
-
-	var elapsed time.Duration
-	elapsed = time.Since(start)
-
-	fmt.Printf("TSP took %s\n", elapsed)
-
-	return minPath
-}
-
-// Next permutation
-func NextPermutation(x sort.Interface) bool {
-	n := x.Len() - 1
-	if n < 1 {
-		return false
-	}
-	j := n - 1
-	for ; !x.Less(j, j+1); j-- {
-		if j == 0 {
-			return false
-		}
-	}
-	l := n
-	for !x.Less(j, l) {
-		l--
-	}
-	x.Swap(j, l)
-	for k, l := j+1, n; k < l; {
-		x.Swap(k, l)
-		k++
-		l--
-	}
-	return true
 }
 
 func main() {
