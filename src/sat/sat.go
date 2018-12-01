@@ -1,190 +1,290 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
-	"log"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
+	"time"
 )
 
-type Vertice struct {
-	id      int
-	edges   []int
-	visited bool
+// Implementación del Stack
+type (
+	Stack struct {
+		top    *stackNode
+		length int
+	}
+	stackNode struct {
+		value interface{}
+		prev  *stackNode
+	}
+)
+
+func NewStack() *Stack {
+	return &Stack{nil, 0}
 }
 
-func (v *Vertice) AddEdge(i int) {
-	v.edges = append(v.edges, i)
+func (this *Stack) Len() int {
+	return this.length
 }
 
-type Boss struct {
-	id      int
-	members map[int]bool
+func (this *Stack) Peek() interface{} {
+	if this.length == 0 {
+		return nil
+	}
+	return this.top.value
 }
 
-func (v *Boss) AddMember(i int) {
-	v.members[i] = true
-}
-
-func readFile(filename string) {
-	k := 0
-
-	file, err := os.Open(filename)
-
-	if err != nil {
-		log.Fatal(err)
+func (this *Stack) Pop() interface{} {
+	if this.length == 0 {
+		return nil
 	}
 
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-
-	if scanner.Scan() {
-		rows, err := strconv.Atoi(scanner.Text())
-
-		if err != nil {
-			log.Fatalf("no se pudo convertir el número: %v\n", err)
-		}
-
-		for i := 1; i <= rows; i++ {
-
-			ni := i * -1
-			vf := &Vertice{i, []int{}, false}
-			mapF[i] = vf
-
-			nvf := &Vertice{ni, []int{}, false}
-			mapF[ni] = nvf
-
-			vb := &Vertice{i, []int{}, false}
-			mapB[i] = vb
-
-			nvb := &Vertice{ni, []int{}, false}
-			mapB[ni] = nvb
-
-			keyMap[k] = i
-			k++
-			keyMap[k] = ni
-			k++
-		}
-	}
-
-	for scanner.Scan() {
-
-		line := strings.Fields(scanner.Text())
-
-		sat1, err := strconv.Atoi(line[0])
-		sat2, err := strconv.Atoi(line[1])
-
-		if err != nil {
-			fmt.Print("No se puede conventir el número(Can't convert the number): %v\n", err)
-			return
-		}
-
-		nsat1V, ok := mapF[sat1*-1]
-
-		if !ok {
-			log.Fatal("Couldn't Find it (No puede ser encontrado): ", sat1*-1)
-		}
-		nsat2V, ok := mapF[sat2*-1]
-
-		if !ok {
-			log.Fatal("Couldn't Find it(No puede ser encontrado): ", sat1*-1)
-		}
-
-		nsat1V.AddEdge(sat2)
-		nsat2V.AddEdge(sat1)
-
-		sat1V, ok := mapB[sat1]
-
-		if !ok {
-			log.Fatal("No puede ser encontrado(Couldn't Find it): ", sat1)
-		}
-
-		sat2V, ok := mapB[sat2]
-
-		if !ok {
-			log.Fatal("No puede ser encontrado(Couldn't Find it): ", sat2)
-		}
-
-		sat1V.AddEdge(sat2 * -1)
-		sat2V.AddEdge(sat1 * -1)
-	}
-
-	if err := scanner.Err(); err != nil {
-		log.Fatal(err)
-	}
-
+	n := this.top
+	this.top = n.prev
+	this.length--
+	return n.value
 }
 
-func cicloDFS(graph map[int]*Vertice, orderer map[int]int, pass int) {
+func (this *Stack) Push(value interface{}) {
+	n := &stackNode{value, this.top}
+	this.top = n
+	this.length++
+}
 
-	for i := len(orderer); i > 0; i-- {
+//
 
-		w, ok := graph[orderer[i]]
+type Node struct {
+	label     int
+	visited   bool
+	neighbors map[int][]*Node
+}
 
-		if ok {
-			if !w.visited {
-				if pass == 2 {
-					g = &Boss{w.id, make(map[int]bool)}
-					mainMap[g.id] = g
-				}
-				dfs(graph, w, pass)
+type Graph struct {
+	nodes map[int]*Node
+}
+
+func (g *Graph) dfs(node *Node) int {
+	node.visited = true
+
+	count := 0
+
+	if len(node.neighbors) != 0 {
+		for _, v := range node.neighbors[node.label] {
+			if v.visited == false {
+				count += g.dfs(v)
 			}
 		}
 	}
+
+	return count + 1
 }
 
-func dfs(graph map[int]*Vertice, i *Vertice, pass int) {
-	i.visited = true
+// Se visita un nodo y se comprueban todos los nodos a los que se puede llegar desde aquí, luego de terminar de un nodo,
+// se guarda en el stack
 
-	if pass == 2 {
-		g.AddMember(i.id)
-	}
+func (g *Graph) fillOrder(node *Node, stack *Stack) {
+	node.visited = true
 
-	for _, v := range i.edges {
-
-		node := graph[v]
-
-		if !node.visited {
-			dfs(graph, node, pass)
+	if len(node.neighbors) != 0 {
+		for _, v := range node.neighbors[node.label] {
+			if v.visited == false {
+				g.fillOrder(v, stack)
+			}
 		}
 	}
 
-	if pass == 1 {
-		t++
-		orderMap[t] = i.id
-	}
+	stack.Push(node.label)
 }
 
-var mapF = make(map[int]*Vertice)
-var mapB = make(map[int]*Vertice)
-var keyMap = make(map[int]int)
-var orderMap = make(map[int]int)
-var mainMap = make(map[int]*Boss)
-var g *Boss
-var t int
+// Función que se encarga de procesar e imprimir los SCC resultantes
+
+func (g *Graph) printSCC(bytesRead []byte) {
+	start := time.Now()
+
+	stack := NewStack()
+
+	var n []int
+	count := 0
+
+	// Se colocan los nodos en el stack
+	for label := range g.nodes {
+		if g.nodes[label].visited == false {
+			g.fillOrder(g.nodes[label], stack)
+		}
+	}
+
+	gr := CreateGraph(bytesRead, true)
+
+	for stack.Len() > 0 {
+		v := (stack.Pop()).(int)
+
+		if gr.nodes[v].visited == false {
+			count = gr.dfs(gr.nodes[v])
+			n = append(n, count)
+		}
+	}
+
+	sort.Sort(sort.Reverse(sort.IntSlice(n)))
+
+	fmt.Print("Los 5 SCC más grandes: ")
+
+	for i := 0; i < 5; i++ {
+		if i < len(n) {
+			if i != 4 {
+				fmt.Print(n[i], ", ")
+			} else {
+				fmt.Print(n[i])
+			}
+		} else {
+			if i != 4 {
+				fmt.Print(0, ", ")
+			} else {
+				fmt.Print(0)
+			}
+		}
+	}
+
+	fmt.Println()
+
+	var elapsed time.Duration
+	elapsed = time.Since(start)
+
+	fmt.Printf("SCC took %s\n", elapsed)
+}
+
+func ReadFile(name string) []byte {
+	start := time.Now()
+	file, err := os.Open(name)
+
+	if err != nil {
+		fmt.Println(err)
+		return nil
+	}
+	defer file.Close()
+
+	fileinfo, err := file.Stat()
+	if err != nil {
+		fmt.Println(err)
+		return nil
+	}
+
+	filesize := fileinfo.Size()
+	buffer := make([]byte, filesize)
+
+	bytesread, err := file.Read(buffer)
+	if err != nil {
+		fmt.Println(err)
+		return nil
+	}
+
+	var elapsed time.Duration
+	elapsed = time.Since(start)
+
+	fmt.Println("bytes read: ", bytesread)
+
+	fmt.Printf("Reading took %s\n", elapsed)
+
+	return buffer
+}
+
+func (g *Graph) GetNode(label int) *Node {
+
+	if g.nodes[label] != nil {
+		return g.nodes[label]
+	}
+
+	return nil
+}
+
+func CreateNode(label int) *Node {
+	n := new(Node)
+	n.label = label
+	n.neighbors = make(map[int][]*Node)
+	return n
+}
+
+func (g *Graph) AddEdge(nini *Node, nfin *Node) {
+	nini.neighbors[nini.label] = append(nini.neighbors[nini.label], nfin)
+}
+
+func CreateGraph(bytesRead []byte, rev bool) *Graph {
+	nodes := strings.Fields(string(bytesRead))
+
+	start := time.Now()
+
+	g := new(Graph)
+	g.nodes = make(map[int]*Node)
+
+	for i := 0; i < len(nodes); i += 2 {
+		labelIni, err := strconv.Atoi(nodes[i])
+		labelFin, err2 := strconv.Atoi(nodes[i+1])
+
+		if err != nil || err2 != nil {
+			fmt.Println("ERROR CREATING THE GRAPH")
+			return nil
+		}
+
+		var nini *Node
+		var nfin *Node
+
+		if g.GetNode(labelIni) == nil {
+			nini = CreateNode(labelIni)
+			g.AddNode(nini)
+		} else {
+			nini = g.GetNode(labelIni)
+		}
+		if g.GetNode(labelFin) == nil {
+			nfin = CreateNode(labelFin)
+			g.AddNode(nfin)
+		} else {
+			nfin = g.GetNode(labelFin)
+		}
+
+		if rev == false {
+			g.AddEdge(nini, nfin)
+		} else {
+			g.AddEdge(nfin, nini)
+		}
+
+		if i%100000 == 0 && !rev {
+			fmt.Printf("%8d - Creating...\n", len(g.nodes))
+		} else if i%100000 == 0 && rev {
+			fmt.Printf("%8d - Creating Reverse...\n", len(g.nodes))
+		}
+	}
+
+	var elapsed time.Duration
+	elapsed = time.Since(start)
+
+	fmt.Printf("Creation took %s\n", elapsed)
+
+	return g
+}
+
+func (g *Graph) AddNode(node *Node) {
+	g.nodes[node.label] = node
+}
 
 func main() {
-	var name string
+	name := "SCC.txt"
 	if len(os.Args) > 1 {
 		name = os.Args[1]
 	}
 
-	readFile(name)
-	cicloDFS(mapB, keyMap, 1)
-	cicloDFS(mapF, orderMap, 2)
+	bytesRead := ReadFile(name)
 
-	for _, v := range mainMap {
-		for w := range v.members {
-			_, ok := v.members[w*-1]
-
-			if ok {
-				fmt.Println("La satisfacibilidad es 0")
-				return
-			}
-		}
+	if bytesRead == nil {
+		return
 	}
-	fmt.Println("La satisfacibilidad es 1")
+
+	gr := CreateGraph(bytesRead, false)
+
+	if gr == nil {
+		return
+	}
+
+	gr.printSCC(bytesRead)
+
 }
