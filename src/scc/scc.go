@@ -121,7 +121,6 @@ func (g *Graph) printSCC(bytesRead []byte) {
 		v := (stack.Pop()).(int)
 
 		if gr.nodes[v].visited == false {
-			//fmt.Print("SCC: ")
 			count = gr.dfs(gr.nodes[v])
 			n = append(n, count)
 		}
