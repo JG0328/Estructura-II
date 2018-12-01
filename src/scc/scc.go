@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -54,7 +55,6 @@ func (this *Stack) Push(value interface{}) {
 
 //
 
-// Código facilitado por el profesor
 type Node struct {
 	label     int
 	visited   bool
@@ -65,88 +65,13 @@ type Graph struct {
 	nodes map[int]*Node
 }
 
-/*
-func (g *Graph) AddNode(n *Node) {
-	g.nodes[g.nrnodes] = n
-	g.nrnodes++
-}
-
-
-func (n *Node) AddEdge(nd *Node) {
-	n.neighbors = append(n.neighbors, nd)
-}
-
-func (g *Graph) getNode(n int) *Node {
-	for i := 0; i < g.nrnodes; i++ {
-		pnd := g.nodes[i]
-		if pnd.label == n {
-			return pnd
-		}
-	}
-	return nil
-}
-
-func newGraph(n int) (pg *Graph) {
-	pg = new(Graph)
-	pg.nodes = make([]*Node, n)
-	return
-}
-
-func (pg *Graph) creatGraph(lsls [][2]int, rev bool, start time.Time) {
-	var i int
-	for _, lis := range lsls {
-		var nini, nfin int
-		if rev {
-			nini = lis[1]
-			nfin = lis[0]
-		} else {
-			nini = lis[0]
-			nfin = lis[1]
-		}
-		pini := pg.getNode(nini)
-		if pini == nil {
-			pini = new(Node)
-			pini.label = nini
-			pg.AddNode(pini)
-		}
-		nd := pg.getNode(nfin)
-		if nd == nil {
-			nd = new(Node)
-			nd.label = nfin
-			pg.AddNode(nd)
-		}
-		pini.AddEdge(nd)
-		i++
-		if i%100000 == 0 {
-			elapsed := time.Since(start)
-			fmt.Printf("%8d %v %8d %8d \n", i, elapsed, nini, nfin)
-		}
-	}
-}
-*/
-
-func getMax(lis2 [][2]int) (n int) {
-	for _, lis := range lis2 {
-		if n < lis[0] {
-			n = lis[0]
-		}
-		if n < lis[1] {
-			n = lis[1]
-		}
-	}
-	return n
-}
-
-/*
 func (g *Graph) dfs(node *Node) int {
 	node.visited = true
 
 	count := 0
 
-	fmt.Printf("%d ", node.label)
-
 	if len(node.neighbors) != 0 {
-		for _, v := range node.neighbors {
+		for _, v := range node.neighbors[node.label] {
 			if v.visited == false {
 				count += g.dfs(v)
 			}
@@ -155,64 +80,50 @@ func (g *Graph) dfs(node *Node) int {
 
 	return count + 1
 }
-*/
-
-//
 
 // Se visita un nodo y se comprueban todos los nodos a los que se puede llegar desde aquí, luego de terminar de un nodo,
 // se guarda en el stack
-/*
+
 func (g *Graph) fillOrder(node *Node, stack *Stack) {
 	node.visited = true
 
 	if len(node.neighbors) != 0 {
-		for _, v := range node.neighbors {
+		for _, v := range node.neighbors[node.label] {
 			if v.visited == false {
 				g.fillOrder(v, stack)
 			}
 		}
 	}
 
-	stack.Push(node.label - 1)
-
-	//fmt.Println("PEEK:", (stack.Peek()).(int))
+	stack.Push(node.label)
 }
-*/
 
 // Función que se encarga de procesar e imprimir los SCC resultantes
-/*
-func (g *Graph) printSCC(lisnod [][2]int, start time.Time) {
+
+func (g *Graph) printSCC(bytesRead []byte) {
+	start := time.Now()
+
 	stack := NewStack()
 
-	n := make([]int, 5)
-	index := 0
+	var n []int
 	count := 0
 
-	for i := 0; i < len(g.nodes); i++ {
-		if g.getNode(i+1).visited == false {
-			g.fillOrder(g.getNode(i+1), stack)
+	// Se colocan los nodos en el stack
+	for label := range g.nodes {
+		if g.nodes[label].visited == false {
+			g.fillOrder(g.nodes[label], stack)
 		}
 	}
 
-	// Se crea el inverso
-	gr := newGraph(len(g.nodes))
-	gr.creatGraph(lisnod, true, start)
-	//
+	gr := CreateGraph(bytesRead, true)
 
 	for stack.Len() > 0 {
-		v := (stack.Pop()).(int) + 1
+		v := (stack.Pop()).(int)
 
-		//fmt.Println("POP: ", v)
-		//fmt.Println("NODO: ", gr.getNode(v).label)
-
-		if gr.getNode(v).visited == false {
-			fmt.Print("SCC: ")
-			count = gr.dfs(gr.getNode(v))
-			if index < 5 {
-				n[index] = count
-				index = index + 1
-			}
-			fmt.Println()
+		if gr.nodes[v].visited == false {
+			//fmt.Print("SCC: ")
+			count = gr.dfs(gr.nodes[v])
+			n = append(n, count)
 		}
 	}
 
@@ -221,16 +132,28 @@ func (g *Graph) printSCC(lisnod [][2]int, start time.Time) {
 	fmt.Print("Los 5 SCC más grandes: ")
 
 	for i := 0; i < 5; i++ {
-		if i != 4 {
-			fmt.Print(n[i], ", ")
+		if i < len(n) {
+			if i != 4 {
+				fmt.Print(n[i], ", ")
+			} else {
+				fmt.Print(n[i])
+			}
 		} else {
-			fmt.Print(n[i])
+			if i != 4 {
+				fmt.Print(0, ", ")
+			} else {
+				fmt.Print(0)
+			}
 		}
 	}
 
 	fmt.Println()
+
+	var elapsed time.Duration
+	elapsed = time.Since(start)
+
+	fmt.Printf("SCC took %s\n", elapsed)
 }
-*/
 
 func ReadFile(name string) []byte {
 	start := time.Now()
@@ -284,11 +207,10 @@ func CreateNode(label int) *Node {
 }
 
 func (g *Graph) AddEdge(nini *Node, nfin *Node) {
-	//nini.neighbors = append(nini.neighbors, nfin)
 	nini.neighbors[nini.label] = append(nini.neighbors[nini.label], nfin)
 }
 
-func CreateGraph(bytesRead []byte) *Graph {
+func CreateGraph(bytesRead []byte, rev bool) *Graph {
 	nodes := strings.Fields(string(bytesRead))
 
 	start := time.Now()
@@ -321,10 +243,16 @@ func CreateGraph(bytesRead []byte) *Graph {
 			nfin = g.GetNode(labelFin)
 		}
 
-		g.AddEdge(nini, nfin)
+		if rev == false {
+			g.AddEdge(nini, nfin)
+		} else {
+			g.AddEdge(nfin, nini)
+		}
 
-		if i%100000 == 0 {
+		if i%100000 == 0 && !rev {
 			fmt.Printf("%8d - Creating...\n", len(g.nodes))
+		} else if i%100000 == 0 && rev {
+			fmt.Printf("%8d - Creating Reverse...\n", len(g.nodes))
 		}
 	}
 
@@ -340,22 +268,6 @@ func (g *Graph) AddNode(node *Node) {
 	g.nodes[node.label] = node
 }
 
-/*
-func (g *Graph) Display() {
-	s := ""
-	for i := 0; i < len(g.nodes); i++ {
-		s += fmt.Sprintf("%8d --> ", g.nodes[i].label)
-		near := g.nodes[i]
-		for j := 0; j < len(near.neighbors); j++ {
-			s += fmt.Sprintf("%8d ", near.neighbors[j].label)
-		}
-		//        s += "\n"
-		fmt.Println(s)
-		s = ""
-	}
-}
-*/
-
 func main() {
 	name := "SCC.txt"
 	if len(os.Args) > 1 {
@@ -368,50 +280,12 @@ func main() {
 		return
 	}
 
-	gr := CreateGraph(bytesRead)
+	gr := CreateGraph(bytesRead, false)
 
 	if gr == nil {
 		return
 	}
 
-	//gr.Display()
+	gr.printSCC(bytesRead)
 
-	/*
-		file, err := os.Open(name)
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer file.Close()
-		var pg *Graph
-		scanner := bufio.NewScanner(file)
-		if err := scanner.Err(); err != nil {
-			log.Fatal(err)
-		}
-		var lisnod [][2]int
-		var anod [2]int
-		var i int
-		var elapsed time.Duration
-		for scanner.Scan() {
-			lineStr := scanner.Text()
-			fmt.Sscanf(lineStr, "%d %d", &anod[0], &anod[1])
-			lisnod = append(lisnod, anod)
-			i++
-			if i%100000 == 0 {
-				elapsed = time.Since(start)
-				fmt.Printf("%8d %v %8d %8d \n", i, elapsed, anod[0], anod[1])
-			}
-		}
-		elapsed = time.Since(start)
-		fmt.Printf("Reading took %s\n", elapsed)
-		nr := getMax(lisnod)
-		fmt.Printf("Entradas %10d  Nodos %10d\n", len(lisnod), nr)
-		pg = newGraph(nr)
-		pg.creatGraph(lisnod, false, start)
-		elapsed = time.Since(start)
-		fmt.Printf("Nodos %10d Creating  %s\n", len(pg.nodes), elapsed)
-		pg.display()
-		pg.printSCC(lisnod, start)
-		elapsed = time.Since(start)
-		fmt.Printf("Finish time %s \n", elapsed)
-	*/
 }
