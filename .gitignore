@@ -25,3 +25,6 @@ SCC.txt
 2sat4.txt
 2sat5.txt
 2sat6.txt
+
+# TSP files
+*.tsp
