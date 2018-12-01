@@ -58,11 +58,11 @@ func (this *Stack) Push(value interface{}) {
 type Node struct {
 	label     int
 	visited   bool
-	neighbors []*Node
+	neighbors map[int][]*Node
 }
 
 type Graph struct {
-	nodes []*Node
+	nodes map[int]*Node
 }
 
 /*
@@ -137,6 +137,7 @@ func getMax(lis2 [][2]int) (n int) {
 	return n
 }
 
+/*
 func (g *Graph) dfs(node *Node) int {
 	node.visited = true
 
@@ -154,11 +155,13 @@ func (g *Graph) dfs(node *Node) int {
 
 	return count + 1
 }
+*/
 
 //
 
 // Se visita un nodo y se comprueban todos los nodos a los que se puede llegar desde aquí, luego de terminar de un nodo,
 // se guarda en el stack
+/*
 func (g *Graph) fillOrder(node *Node, stack *Stack) {
 	node.visited = true
 
@@ -174,6 +177,7 @@ func (g *Graph) fillOrder(node *Node, stack *Stack) {
 
 	//fmt.Println("PEEK:", (stack.Peek()).(int))
 }
+*/
 
 // Función que se encarga de procesar e imprimir los SCC resultantes
 /*
@@ -265,10 +269,8 @@ func ReadFile(name string) []byte {
 
 func (g *Graph) GetNode(label int) *Node {
 
-	for i := 0; i < len(g.nodes); i++ {
-		if g.nodes[i].label == label {
-			return g.nodes[i]
-		}
+	if g.nodes[label] != nil {
+		return g.nodes[label]
 	}
 
 	return nil
@@ -277,11 +279,13 @@ func (g *Graph) GetNode(label int) *Node {
 func CreateNode(label int) *Node {
 	n := new(Node)
 	n.label = label
+	n.neighbors = make(map[int][]*Node)
 	return n
 }
 
 func (g *Graph) AddEdge(nini *Node, nfin *Node) {
-	nini.neighbors = append(nini.neighbors, nfin)
+	//nini.neighbors = append(nini.neighbors, nfin)
+	nini.neighbors[nini.label] = append(nini.neighbors[nini.label], nfin)
 }
 
 func CreateGraph(bytesRead []byte) *Graph {
@@ -290,6 +294,7 @@ func CreateGraph(bytesRead []byte) *Graph {
 	start := time.Now()
 
 	g := new(Graph)
+	g.nodes = make(map[int]*Node)
 
 	for i := 0; i < len(nodes); i += 2 {
 		labelIni, err := strconv.Atoi(nodes[i])
@@ -305,16 +310,22 @@ func CreateGraph(bytesRead []byte) *Graph {
 
 		if g.GetNode(labelIni) == nil {
 			nini = CreateNode(labelIni)
+			g.AddNode(nini)
 		} else {
 			nini = g.GetNode(labelIni)
 		}
 		if g.GetNode(labelFin) == nil {
 			nfin = CreateNode(labelFin)
+			g.AddNode(nfin)
 		} else {
 			nfin = g.GetNode(labelFin)
 		}
 
 		g.AddEdge(nini, nfin)
+
+		if i%100000 == 0 {
+			fmt.Printf("%8d - Creating...\n", len(g.nodes))
+		}
 	}
 
 	var elapsed time.Duration
@@ -326,24 +337,24 @@ func CreateGraph(bytesRead []byte) *Graph {
 }
 
 func (g *Graph) AddNode(node *Node) {
-	g.nodes = append(g.nodes, node)
+	g.nodes[node.label] = node
 }
 
+/*
 func (g *Graph) Display() {
-	/*
-		s := ""
-		for i := 0; i < len(g.nodes); i++ {
-			s += fmt.Sprintf("%8d --> ", g.nodes[i].label)
-			near := g.nodes[i]
-			for j := 0; j < len(near.neighbors); j++ {
-				s += fmt.Sprintf("%8d ", near.neighbors[j].label)
-			}
-			//        s += "\n"
-			fmt.Println(s)
-			s = ""
+	s := ""
+	for i := 0; i < len(g.nodes); i++ {
+		s += fmt.Sprintf("%8d --> ", g.nodes[i].label)
+		near := g.nodes[i]
+		for j := 0; j < len(near.neighbors); j++ {
+			s += fmt.Sprintf("%8d ", near.neighbors[j].label)
 		}
-	*/
+		//        s += "\n"
+		fmt.Println(s)
+		s = ""
+	}
 }
+*/
 
 func main() {
 	name := "SCC.txt"
@@ -363,7 +374,7 @@ func main() {
 		return
 	}
 
-	gr.Display()
+	//gr.Display()
 
 	/*
 		file, err := os.Open(name)
