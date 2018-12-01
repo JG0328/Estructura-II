@@ -17,3 +17,11 @@ SCC.txt
 # Data
 \github.com
 \golang.org
+
+# SAT files
+2sat1.txt
+2sat2.txt
+2sat3.txt
+2sat4.txt
+2sat5.txt
+2sat6.txt

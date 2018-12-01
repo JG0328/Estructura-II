@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -65,20 +64,18 @@ type Graph struct {
 	nodes map[int]*Node
 }
 
-func (g *Graph) dfs(node *Node) int {
+func (g *Graph) dfs(node *Node) {
 	node.visited = true
-
-	count := 0
 
 	if len(node.neighbors) != 0 {
 		for _, v := range node.neighbors[node.label] {
 			if v.visited == false {
-				count += g.dfs(v)
+				g.dfs(v)
 			}
 		}
 	}
 
-	return count + 1
+	return
 }
 
 // Se visita un nodo y se comprueban todos los nodos a los que se puede llegar desde aquí, luego de terminar de un nodo,
@@ -105,8 +102,8 @@ func (g *Graph) printSCC(bytesRead []byte) {
 
 	stack := NewStack()
 
-	var n []int
-	count := 0
+	//var n []int
+	//count := 0
 
 	// Se colocan los nodos en el stack
 	for label := range g.nodes {
@@ -121,28 +118,7 @@ func (g *Graph) printSCC(bytesRead []byte) {
 		v := (stack.Pop()).(int)
 
 		if gr.nodes[v].visited == false {
-			count = gr.dfs(gr.nodes[v])
-			n = append(n, count)
-		}
-	}
-
-	sort.Sort(sort.Reverse(sort.IntSlice(n)))
-
-	fmt.Print("Los 5 SCC más grandes: ")
-
-	for i := 0; i < 5; i++ {
-		if i < len(n) {
-			if i != 4 {
-				fmt.Print(n[i], ", ")
-			} else {
-				fmt.Print(n[i])
-			}
-		} else {
-			if i != 4 {
-				fmt.Print(0, ", ")
-			} else {
-				fmt.Print(0)
-			}
+			gr.dfs(gr.nodes[v])
 		}
 	}
 
