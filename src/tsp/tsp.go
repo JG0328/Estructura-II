@@ -12,7 +12,8 @@ import (
 type Node struct {
 	label     int
 	visited   bool
-	neighbors map[int]*Edge
+	neighbors map[int]*Node
+	distances map[*Node]float64
 	position  Position
 }
 
@@ -23,11 +24,6 @@ type Graph struct {
 type Position struct {
 	posX float64
 	posY float64
-}
-
-type Edge struct {
-	node   *Node
-	weight float64
 }
 
 func ReadFile(name string) []byte {
@@ -65,86 +61,84 @@ func ReadFile(name string) []byte {
 	return buffer
 }
 
-func (g *Graph) GetNode(label int) *Node {
-
-	if g.nodes[label] != nil {
-		return g.nodes[label]
-	}
-
-	return nil
-}
-
 func CreateNode(label int) *Node {
 	n := new(Node)
 	n.label = label
-	n.neighbors = make(map[int]*Edge)
+	n.neighbors = make(map[int]*Node)
+	n.distances = make(map[*Node]float64)
 	return n
 }
 
-func (g *Graph) AddEdge(nini *Node, nfin *Node) {
-	//nini.neighbors[nini.label] = append(nini.neighbors[nini.label], nfin)
+func (g *Graph) SetDistance(node *Node) {
+	node.neighbors = g.nodes
+
+	for i := 0; i < len(node.neighbors); i++ {
+		if (i + 1) <= node.label {
+			delete(node.distances, node.neighbors[i+1])
+			//fmt.Print("Node ", node.label, " deleted... ", node.neighbors[i+1].label)
+		}
+	}
+
+	for id := range node.neighbors {
+		if node.distances[node] == 0 {
+			x := math.Pow(node.position.posX-node.neighbors[id].position.posX, 2)
+			y := math.Pow(node.position.posY-node.neighbors[id].position.posY, 2)
+			z := math.Sqrt(x + y)
+			node.distances[node.neighbors[id]] = z
+			node.neighbors[id].distances[node] = z
+		}
+	}
 }
 
-func CreateEdge(node *Node, weight float64) *Edge {
-	e := new(Edge)
-	e.node = node
-	e.weight = weight
+func (g *Graph) CreateConnections() {
+	start := time.Now()
 
-	return e
-}
+	for i := 0; i < len(g.nodes); i++ {
+		g.SetDistance(g.nodes[i+1])
 
-func SetDistance(nini *Node, nfin *Node) {
-	x := math.Pow(nfin.position.posX-nini.position.posX, 2)
-	y := math.Pow(nfin.position.posY-nini.position.posY, 2)
-	z := math.Sqrt(x + y)
-
-	nini.neighbors[nfin.label] = CreateEdge(nfin, z)
-	nfin.neighbors[nini.label] = CreateEdge(nini, z)
+		if i%1000 == 0 {
+			var elapsed time.Duration
+			elapsed = time.Since(start)
+			fmt.Printf("%8d - Connections - %s\n", i, elapsed)
+		}
+	}
 }
 
 func CreateGraph(bytesRead []byte, rev bool) *Graph {
-	nodes := strings.Fields(string(bytesRead))
+	data := strings.Fields(string(bytesRead))
 
 	start := time.Now()
 
 	g := new(Graph)
 	g.nodes = make(map[int]*Node)
 
-	for i := 0; i < len(nodes); i += 2 {
-		labelIni, err := strconv.Atoi(nodes[i])
-		labelFin, err2 := strconv.Atoi(nodes[i+1])
+	for i := 0; i < len(data); i += 3 {
+		label, err := strconv.Atoi(data[i])
 
-		if err != nil || err2 != nil {
+		if err != nil {
 			fmt.Println("ERROR CREATING THE GRAPH")
 			return nil
 		}
 
-		var nini *Node
-		var nfin *Node
+		var node *Node
 
-		if g.GetNode(labelIni) == nil {
-			nini = CreateNode(labelIni)
-			g.AddNode(nini)
-		} else {
-			nini = g.GetNode(labelIni)
-		}
-		if g.GetNode(labelFin) == nil {
-			nfin = CreateNode(labelFin)
-			g.AddNode(nfin)
-		} else {
-			nfin = g.GetNode(labelFin)
+		node = CreateNode(label)
+
+		x, errX := strconv.ParseFloat(data[i+1], 64)
+		y, errY := strconv.ParseFloat(data[i+2], 64)
+
+		if errX != nil || errY != nil {
+			fmt.Println("ERROR CREATING THE GRAPH")
+			return nil
 		}
 
-		if rev == false {
-			g.AddEdge(nini, nfin)
-		} else {
-			g.AddEdge(nfin, nini)
-		}
+		node.position.posX = x
+		node.position.posY = y
 
-		if i%100000 == 0 && !rev {
-			fmt.Printf("%8d - Creating...\n", len(g.nodes))
-		} else if i%100000 == 0 && rev {
-			fmt.Printf("%8d - Creating Reverse...\n", len(g.nodes))
+		g.AddNode(node)
+
+		if node.label%1000 == 0 {
+			fmt.Printf("%8d - Creating...\n", node.label)
 		}
 	}
 
@@ -153,6 +147,8 @@ func CreateGraph(bytesRead []byte, rev bool) *Graph {
 
 	fmt.Printf("Creation took %s\n", elapsed)
 
+	fmt.Print("Graph nodes: ", len(g.nodes), "\n")
+
 	return g
 }
 
@@ -160,8 +156,12 @@ func (g *Graph) AddNode(node *Node) {
 	g.nodes[node.label] = node
 }
 
+func Solve() {
+
+}
+
 func main() {
-	name := "SCC.txt"
+	var name string
 	if len(os.Args) > 1 {
 		name = os.Args[1]
 	}
@@ -173,6 +173,7 @@ func main() {
 	}
 
 	gr := CreateGraph(bytesRead, false)
+	gr.CreateConnections()
 
 	if gr == nil {
 		return
