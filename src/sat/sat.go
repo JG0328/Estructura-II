@@ -244,7 +244,7 @@ func (g *Graph) AddNode(node *Node) {
 }
 
 func main() {
-	name := "SCC.txt"
+	var name string
 	if len(os.Args) > 1 {
 		name = os.Args[1]
 	}
