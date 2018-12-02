@@ -9,6 +9,20 @@ import (
 	"time"
 )
 
+// Estructura que define un nodo
+
+type Node struct {
+	label     int             // identificador
+	visited   bool            // ha sido visitado?
+	neighbors map[int][]*Node // diccionario que contiene los vecinos de este nodo
+}
+
+// Estructura que define un grafo
+
+type Graph struct {
+	nodes map[int]*Node // diccionario que contiene todos los nodos del grafo
+}
+
 // Estas funciones permiten el uso de la estructura de datos "Stack" en Go
 type (
 	Stack struct {
@@ -54,19 +68,6 @@ func (this *Stack) Push(value interface{}) {
 }
 
 //
-// Estructura que define un nodo
-
-type Node struct {
-	label     int             // identificador
-	visited   bool            // ha sido visitado?
-	neighbors map[int][]*Node // diccionario que contiene los vecinos de este nodo
-}
-
-// Estructura que define un grafo
-
-type Graph struct {
-	nodes map[int]*Node // diccionario que contiene todos los nodos del grafo
-}
 
 // Funcion que realiza el recorrido de profundidad
 // Retorna un contador que permite llevar un conteo de los elementos del SCC
