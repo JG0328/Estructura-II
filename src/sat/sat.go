@@ -72,13 +72,13 @@ func (this *Stack) Push(value interface{}) {
 // Funcion que realiza el recorrido de profundidad
 // Va agregando los nodos que visita a un diccionario
 
-func (g *Graph) dfs(n *Node) int {
+func (g *Graph) DFS(n *Node) int {
 	n.visited = true
 
 	if len(n.neighbors) != 0 {
 		for _, v := range n.neighbors[n.label] {
 			if v.visited == false {
-				sccDic[g.dfs(v)] = v
+				sccDic[g.DFS(v)] = v
 			}
 		}
 	}
@@ -88,13 +88,13 @@ func (g *Graph) dfs(n *Node) int {
 
 // Se hace un recorrido de profundidad, agregando cada nodo visitado al stack
 
-func (g *Graph) fillOrder(n *Node, s *Stack) {
+func (g *Graph) FOrder(n *Node, s *Stack) {
 	n.visited = true
 
 	if len(n.neighbors) != 0 {
 		for _, v := range n.neighbors[n.label] {
 			if v.visited == false {
-				g.fillOrder(v, s)
+				g.FOrder(v, s)
 			}
 		}
 	}
@@ -116,7 +116,7 @@ func (g *Graph) GetSCC(bytes []byte) {
 	// Se colocan los nodos en el stack
 	for label := range g.nodes {
 		if g.nodes[label].visited == false {
-			g.fillOrder(g.nodes[label], s)
+			g.FOrder(g.nodes[label], s)
 		}
 	}
 
@@ -127,7 +127,7 @@ func (g *Graph) GetSCC(bytes []byte) {
 		v := (s.Pop()).(int)
 
 		if gr.nodes[v].visited == false {
-			sccDic[gr.dfs(gr.nodes[v])] = gr.nodes[v]
+			sccDic[gr.DFS(gr.nodes[v])] = gr.nodes[v]
 
 			// x y ~n existen en el mismo SCC? Entonces no tiene solucion
 			if sccDic[v] != nil && sccDic[v*-1] != nil {

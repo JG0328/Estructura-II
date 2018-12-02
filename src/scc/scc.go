@@ -90,13 +90,13 @@ func (g *Graph) DFS(n *Node) int {
 
 // Se hace un recorrido de profundidad, agregando cada nodo visitado al stack
 
-func (g *Graph) fillOrder(n *Node, s *Stack) {
+func (g *Graph) FOrder(n *Node, s *Stack) {
 	n.visited = true
 
 	if len(n.neighbors) != 0 {
 		for _, v := range n.neighbors[n.label] {
 			if v.visited == false {
-				g.fillOrder(v, s)
+				g.FOrder(v, s)
 			}
 		}
 	}
@@ -117,7 +117,7 @@ func (g *Graph) SCC(bytesRead []byte) {
 	// Primer dfs
 	for label := range g.nodes {
 		if g.nodes[label].visited == false {
-			g.fillOrder(g.nodes[label], s)
+			g.FOrder(g.nodes[label], s)
 		}
 	}
 
@@ -209,6 +209,11 @@ func CreateNode(l int) *Node {
 	return n
 }
 
+// Funcion que agrega un nodo ya creado al grafo
+func (g *Graph) AddNode(n *Node) {
+	g.nodes[n.label] = n
+}
+
 // Funcion que crea una arista entre un nodo y otro
 
 func (g *Graph) AddEdge(ini *Node, fin *Node) {
@@ -270,11 +275,6 @@ func CreateGraph(bytes []byte, r bool) *Graph {
 	fmt.Printf("Creation took %s\n", elapsed)
 
 	return g
-}
-
-// Funcion que agrega un nodo ya creado al grafo
-func (g *Graph) AddNode(n *Node) {
-	g.nodes[n.label] = n
 }
 
 func main() {
