@@ -195,23 +195,23 @@ func (g *Graph) GetNode(l int) *Node {
 
 // Funcion que inicializa un nodo
 
-func CreateNode(label int) *Node {
+func CreateNode(l int) *Node {
 	n := new(Node)
-	n.label = label
+	n.label = l
 	n.neighbors = make(map[int][]*Node)
 	return n
 }
 
 // Funcion que agrega un nodo al grafo
 
-func (g *Graph) AddNode(node *Node) {
-	g.nodes[node.label] = node
+func (g *Graph) AddNode(n *Node) {
+	g.nodes[n.label] = n
 }
 
 // Funcion que agrega una arista entre un nodo y otro
 
-func (g *Graph) AddEdge(nini *Node, nfin *Node) {
-	nini.neighbors[nini.label] = append(nini.neighbors[nini.label], nfin)
+func (g *Graph) AddEdge(ini *Node, fin *Node) {
+	ini.neighbors[ini.label] = append(ini.neighbors[ini.label], fin)
 }
 
 // Funcion que se encarga de crear un grafo
