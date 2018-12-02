@@ -68,6 +68,8 @@ type Graph struct {
 func (g *Graph) dfs(node *Node) int {
 	node.visited = true
 
+	//fmt.Printf("%d ", node.label)
+
 	count := 0
 
 	if len(node.neighbors) != 0 {
@@ -121,8 +123,10 @@ func (g *Graph) printSCC(bytesRead []byte) {
 		v := (stack.Pop()).(int)
 
 		if gr.nodes[v].visited == false {
+			//fmt.Print("SCC: ")
 			count = gr.dfs(gr.nodes[v])
 			n = append(n, count)
+			//fmt.Print("\n")
 		}
 	}
 

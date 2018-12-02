@@ -71,16 +71,13 @@ func (g *Graph) dfs(node *Node) int {
 
 	if len(node.neighbors) != 0 {
 		for _, v := range node.neighbors[node.label] {
-			if v.label == (node.label * -1) {
-				return 0
-			}
 			if v.visited == false {
-				g.dfs(v)
+				sccMap[g.dfs(v)] = v
 			}
 		}
 	}
 
-	return 1
+	return node.label
 }
 
 // Se visita un nodo y se comprueban todos los nodos a los que se puede llegar desde aquí, luego de terminar de un nodo,
@@ -102,7 +99,14 @@ func (g *Graph) fillOrder(node *Node, stack *Stack) {
 
 // Función que se encarga de procesar el SCC e imprimir 0 o 1 si tiene solucion
 
+var sccMap map[int]*Node
+var sat int
+
 func (g *Graph) GetSCC(bytesRead []byte) {
+	sat = 1
+
+	sccMap = make(map[int]*Node)
+
 	start := time.Now()
 
 	stack := NewStack()
@@ -116,24 +120,26 @@ func (g *Graph) GetSCC(bytesRead []byte) {
 
 	gr := CreateGraph(bytesRead, true)
 
-	var sol int
-
 	for stack.Len() > 0 {
 		v := (stack.Pop()).(int)
 
 		if gr.nodes[v].visited == false {
-			sol = gr.dfs(gr.nodes[v])
+			sccMap[gr.dfs(gr.nodes[v])] = gr.nodes[v]
 
-			if sol == 0 {
-				fmt.Print("\nNo tiene solucion\n")
-				return
+			if sccMap[v] != nil && sccMap[v*-1] != nil {
+				sat = 0
 			}
+
+			sccMap = nil
+			sccMap = make(map[int]*Node)
 		}
 	}
 
-	fmt.Print("\nTiene solucion\n")
-
-	fmt.Println()
+	if sat == 1 {
+		fmt.Println("Tiene solucion")
+	} else {
+		fmt.Println("No tiene solucion")
+	}
 
 	var elapsed time.Duration
 	elapsed = time.Since(start)
