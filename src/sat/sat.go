@@ -23,6 +23,7 @@ type Graph struct {
 }
 
 // Estas funciones permiten el uso de la estructura de datos "Stack" en Go
+
 type (
 	Stack struct {
 		top    *stackNode
