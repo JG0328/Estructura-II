@@ -171,10 +171,7 @@ func main() {
 	gr := CreateGraph(bytesRead, false)
 	gr.CreateConnections()
 
-	fmt.Printf("Resultado: %.2f\n", gr.TSP(gr.nodes[1]))
-
 	if gr == nil {
 		return
 	}
-
 }
