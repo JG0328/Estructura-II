@@ -53,6 +53,7 @@ func (this *Stack) Push(value interface{}) {
 	this.length++
 }
 
+//
 // Estructura que define un nodo
 
 type Node struct {
@@ -70,52 +71,52 @@ type Graph struct {
 // Funcion que realiza el recorrido de profundidad
 // Retorna un contador que permite llevar un conteo de los elementos del SCC
 
-func (g *Graph) dfs(node *Node) int {
-	node.visited = true
+func (g *Graph) DFS(n *Node) int {
+	n.visited = true
 
-	count := 0
+	c := 0
 
-	if len(node.neighbors) != 0 {
-		for _, v := range node.neighbors[node.label] {
+	if len(n.neighbors) != 0 {
+		for _, v := range n.neighbors[n.label] {
 			if v.visited == false {
-				count += g.dfs(v)
+				c += g.DFS(v)
 			}
 		}
 	}
 
-	return count + 1
+	return c + 1
 }
 
 // Se hace un recorrido de profundidad, agregando cada nodo visitado al stack
 
-func (g *Graph) fillOrder(node *Node, stack *Stack) {
-	node.visited = true
+func (g *Graph) fillOrder(n *Node, s *Stack) {
+	n.visited = true
 
-	if len(node.neighbors) != 0 {
-		for _, v := range node.neighbors[node.label] {
+	if len(n.neighbors) != 0 {
+		for _, v := range n.neighbors[n.label] {
 			if v.visited == false {
-				g.fillOrder(v, stack)
+				g.fillOrder(v, s)
 			}
 		}
 	}
 
-	stack.Push(node.label)
+	s.Push(n.label)
 }
 
 // Funcion que se encarga de buscar los componentes fuertemente conectados en el grafo
 
-func (g *Graph) printSCC(bytesRead []byte) {
+func (g *Graph) SCC(bytesRead []byte) {
 	start := time.Now()
 
-	stack := NewStack()
+	s := NewStack()
 
 	var n []int
-	count := 0
+	c := 0
 
 	// Primer dfs
 	for label := range g.nodes {
 		if g.nodes[label].visited == false {
-			g.fillOrder(g.nodes[label], stack)
+			g.fillOrder(g.nodes[label], s)
 		}
 	}
 
@@ -123,32 +124,28 @@ func (g *Graph) printSCC(bytesRead []byte) {
 	gr := CreateGraph(bytesRead, true)
 
 	// Se realiza el segundo dfs
-	for stack.Len() > 0 {
-		v := (stack.Pop()).(int)
+	for s.Len() > 0 {
+		v := (s.Pop()).(int)
 
 		if gr.nodes[v].visited == false {
-			count = gr.dfs(gr.nodes[v])
-			n = append(n, count)
+			c = gr.DFS(gr.nodes[v])
+			n = append(n, c)
 		}
 	}
 
+	// Go organiza los conteos de los elementos de los SCC de mayor a menor
 	sort.Sort(sort.Reverse(sort.IntSlice(n)))
 
 	fmt.Print("5 SCC: ")
 
+	// Se imprimen los 5 SCC necesarios
+
 	for i := 0; i < 5; i++ {
+		// En caso de que hayan SCC, se imprimen
 		if i < len(n) {
-			if i != 4 {
-				fmt.Print(n[i], ", ")
-			} else {
-				fmt.Print(n[i])
-			}
+			fmt.Print(n[i])
 		} else {
-			if i != 4 {
-				fmt.Print(0, ", ")
-			} else {
-				fmt.Print(0)
-			}
+			fmt.Print(0) // En caso de que no, se imprime 0
 		}
 	}
 
@@ -162,9 +159,9 @@ func (g *Graph) printSCC(bytesRead []byte) {
 
 // Se lee todo el archivo y se carga en una variable
 
-func ReadFile(name string) []byte {
+func GetFile(n string) []byte {
 	start := time.Now()
-	file, err := os.Open(name)
+	file, err := os.Open(n)
 
 	if err != nil {
 		fmt.Println(err)
@@ -181,11 +178,7 @@ func ReadFile(name string) []byte {
 	filesize := fileinfo.Size()
 	buffer := make([]byte, filesize)
 
-	bytesread, err := file.Read(buffer)
-	if err != nil {
-		fmt.Println(err)
-		return nil
-	}
+	file.Read(buffer)
 
 	var elapsed time.Duration
 	elapsed = time.Since(start)
@@ -195,28 +188,37 @@ func ReadFile(name string) []byte {
 	return buffer
 }
 
-func (g *Graph) GetNode(label int) *Node {
+// Funcion que devuelve un nodo en caso de que exista en el grafo
 
-	if g.nodes[label] != nil {
-		return g.nodes[label]
+func (g *Graph) GetNode(l int) *Node {
+
+	if g.nodes[l] != nil {
+		return g.nodes[l]
 	}
 
 	return nil
 }
 
-func CreateNode(label int) *Node {
+// Funcion que crea e inicializa un nodo
+
+func CreateNode(l int) *Node {
 	n := new(Node)
-	n.label = label
+	n.label = l
 	n.neighbors = make(map[int][]*Node)
 	return n
 }
 
-func (g *Graph) AddEdge(nini *Node, nfin *Node) {
-	nini.neighbors[nini.label] = append(nini.neighbors[nini.label], nfin)
+// Funcion que crea una arista entre un nodo y otro
+
+func (g *Graph) AddEdge(ini *Node, fin *Node) {
+	ini.neighbors[ini.label] = append(ini.neighbors[ini.label], fin)
 }
 
-func CreateGraph(bytesRead []byte, rev bool) *Graph {
-	nodes := strings.Fields(string(bytesRead))
+// Funcion que crea el grafo
+// r -> true crea el grafo inverso
+
+func CreateGraph(bytes []byte, r bool) *Graph {
+	nodes := strings.Fields(string(bytes))
 
 	start := time.Now()
 
@@ -224,40 +226,40 @@ func CreateGraph(bytesRead []byte, rev bool) *Graph {
 	g.nodes = make(map[int]*Node)
 
 	for i := 0; i < len(nodes); i += 2 {
-		labelIni, err := strconv.Atoi(nodes[i])
-		labelFin, err2 := strconv.Atoi(nodes[i+1])
+		lIni, err := strconv.Atoi(nodes[i])
+		lFin, err2 := strconv.Atoi(nodes[i+1])
 
 		if err != nil || err2 != nil {
-			fmt.Println("ERROR CREATING THE GRAPH")
+			fmt.Println("ERROR")
 			return nil
 		}
 
-		var nini *Node
-		var nfin *Node
+		var ini *Node
+		var fin *Node
 
-		if g.GetNode(labelIni) == nil {
-			nini = CreateNode(labelIni)
-			g.AddNode(nini)
+		if g.GetNode(lIni) == nil {
+			ini = CreateNode(lIni)
+			g.AddNode(ini)
 		} else {
-			nini = g.GetNode(labelIni)
+			ini = g.GetNode(lIni)
 		}
-		if g.GetNode(labelFin) == nil {
-			nfin = CreateNode(labelFin)
-			g.AddNode(nfin)
+		if g.GetNode(lFin) == nil {
+			fin = CreateNode(lFin)
+			g.AddNode(fin)
 		} else {
-			nfin = g.GetNode(labelFin)
-		}
-
-		if rev == false {
-			g.AddEdge(nini, nfin)
-		} else {
-			g.AddEdge(nfin, nini)
+			fin = g.GetNode(lFin)
 		}
 
-		if i%100000 == 0 && !rev {
-			fmt.Printf("%8d - Creating...\n", len(g.nodes))
-		} else if i%100000 == 0 && rev {
-			fmt.Printf("%8d - Creating Reverse...\n", len(g.nodes))
+		if r == false {
+			g.AddEdge(ini, fin)
+		} else {
+			g.AddEdge(fin, ini)
+		}
+
+		if i%100000 == 0 && !r {
+			fmt.Printf("%8d Creating Normal...\n", i)
+		} else if i%100000 == 0 && r {
+			fmt.Printf("%8d Creating Reverse...\n", i)
 		}
 	}
 
@@ -269,8 +271,9 @@ func CreateGraph(bytesRead []byte, rev bool) *Graph {
 	return g
 }
 
-func (g *Graph) AddNode(node *Node) {
-	g.nodes[node.label] = node
+// Funcion que agrega un nodo ya creado al grafo
+func (g *Graph) AddNode(n *Node) {
+	g.nodes[n.label] = n
 }
 
 func main() {
@@ -278,19 +281,10 @@ func main() {
 	if len(os.Args) > 1 {
 		name = os.Args[1]
 	}
-
-	bytesRead := ReadFile(name)
-
-	if bytesRead == nil {
-		return
-	}
-
+	// Se lee el archivo y se carga a esta variable
+	bytesRead := GetFile(name)
+	// Se crea el grafo normal
 	gr := CreateGraph(bytesRead, false)
-
-	if gr == nil {
-		return
-	}
-
-	gr.printSCC(bytesRead)
-
+	// Se ejecuta el algoritmo en busca de SCC
+	gr.SCC(bytesRead)
 }
