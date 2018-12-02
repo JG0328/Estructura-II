@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-// Implementación del Stack
+// Estas funciones permiten el uso de la estructura de datos "Stack" en Go
 type (
 	Stack struct {
 		top    *stackNode
@@ -53,22 +53,25 @@ func (this *Stack) Push(value interface{}) {
 	this.length++
 }
 
-//
+// Estructura que define un nodo
 
 type Node struct {
-	label     int
-	visited   bool
-	neighbors map[int][]*Node
+	label     int             // identificador
+	visited   bool            // ha sido visitado?
+	neighbors map[int][]*Node // diccionario que contiene los vecinos de este nodo
 }
 
+// Estructura que define un grafo
+
 type Graph struct {
-	nodes map[int]*Node
+	nodes map[int]*Node // diccionario que contiene todos los nodos del grafo
 }
+
+// Funcion que realiza el recorrido de profundidad
+// Retorna un contador que permite llevar un conteo de los elementos del SCC
 
 func (g *Graph) dfs(node *Node) int {
 	node.visited = true
-
-	//fmt.Printf("%d ", node.label)
 
 	count := 0
 
@@ -83,8 +86,7 @@ func (g *Graph) dfs(node *Node) int {
 	return count + 1
 }
 
-// Se visita un nodo y se comprueban todos los nodos a los que se puede llegar desde aquí, luego de terminar de un nodo,
-// se guarda en el stack
+// Se hace un recorrido de profundidad, agregando cada nodo visitado al stack
 
 func (g *Graph) fillOrder(node *Node, stack *Stack) {
 	node.visited = true
@@ -100,7 +102,7 @@ func (g *Graph) fillOrder(node *Node, stack *Stack) {
 	stack.Push(node.label)
 }
 
-// Función que se encarga de procesar e imprimir los SCC resultantes
+// Funcion que se encarga de buscar los componentes fuertemente conectados en el grafo
 
 func (g *Graph) printSCC(bytesRead []byte) {
 	start := time.Now()
@@ -110,29 +112,29 @@ func (g *Graph) printSCC(bytesRead []byte) {
 	var n []int
 	count := 0
 
-	// Se colocan los nodos en el stack
+	// Primer dfs
 	for label := range g.nodes {
 		if g.nodes[label].visited == false {
 			g.fillOrder(g.nodes[label], stack)
 		}
 	}
 
+	// Se crea el grafo inverso
 	gr := CreateGraph(bytesRead, true)
 
+	// Se realiza el segundo dfs
 	for stack.Len() > 0 {
 		v := (stack.Pop()).(int)
 
 		if gr.nodes[v].visited == false {
-			//fmt.Print("SCC: ")
 			count = gr.dfs(gr.nodes[v])
 			n = append(n, count)
-			//fmt.Print("\n")
 		}
 	}
 
 	sort.Sort(sort.Reverse(sort.IntSlice(n)))
 
-	fmt.Print("Los 5 SCC más grandes: ")
+	fmt.Print("5 SCC: ")
 
 	for i := 0; i < 5; i++ {
 		if i < len(n) {
@@ -155,8 +157,10 @@ func (g *Graph) printSCC(bytesRead []byte) {
 	var elapsed time.Duration
 	elapsed = time.Since(start)
 
-	fmt.Printf("SCC took %s\n", elapsed)
+	fmt.Printf("SCC time %s\n", elapsed)
 }
+
+// Se lee todo el archivo y se carga en una variable
 
 func ReadFile(name string) []byte {
 	start := time.Now()
@@ -186,9 +190,7 @@ func ReadFile(name string) []byte {
 	var elapsed time.Duration
 	elapsed = time.Since(start)
 
-	fmt.Println("bytes read: ", bytesread)
-
-	fmt.Printf("Reading took %s\n", elapsed)
+	fmt.Printf("Reading time %s\n", elapsed)
 
 	return buffer
 }
