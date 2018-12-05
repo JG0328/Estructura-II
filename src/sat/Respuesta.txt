@@ -1,1 +1,3 @@
-Todos tienen solucion
+Todos tienen solución, según el algoritmo.
+
+Probé con 2sat7.txt y no tiene solución (lo hice así).

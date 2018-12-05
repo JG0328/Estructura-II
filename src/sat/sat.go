@@ -132,9 +132,11 @@ func (g *Graph) GetSCC(bytesRead []byte) {
 				sat = 0
 			}
 
-			if len(sccMap) > 1 {
-				fmt.Println("SCC -> ", sccMap)
-			}
+			/*
+				if len(sccMap) > 1 {
+					fmt.Println("SCC -> ", sccMap)
+				}
+			*/
 
 			sccMap = nil
 			sccMap = make(map[int]*Node)
