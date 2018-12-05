@@ -66,18 +66,20 @@ type Graph struct {
 
 // El DFS servira para verificar si x y ~x se encuentran son SCC
 
-func (g *Graph) dfs(node *Node) int {
+func (g *Graph) dfs(node *Node, sccMap map[int]*Node) {
 	node.visited = true
+
+	sccMap[node.label] = node
 
 	if len(node.neighbors) != 0 {
 		for _, v := range node.neighbors[node.label] {
 			if v.visited == false {
-				sccMap[g.dfs(v)] = v
+				g.dfs(v, sccMap)
 			}
 		}
 	}
 
-	return node.label
+	return
 }
 
 // Se visita un nodo y se comprueban todos los nodos a los que se puede llegar desde aquí, luego de terminar de un nodo,
@@ -124,10 +126,14 @@ func (g *Graph) GetSCC(bytesRead []byte) {
 		v := (stack.Pop()).(int)
 
 		if gr.nodes[v].visited == false {
-			sccMap[gr.dfs(gr.nodes[v])] = gr.nodes[v]
+			gr.dfs(gr.nodes[v], sccMap)
 
 			if sccMap[v] != nil && sccMap[v*-1] != nil {
 				sat = 0
+			}
+
+			if len(sccMap) > 1 {
+				fmt.Println("SCC -> ", sccMap)
 			}
 
 			sccMap = nil
