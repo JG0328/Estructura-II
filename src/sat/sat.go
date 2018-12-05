@@ -8,20 +8,6 @@ import (
 	"time"
 )
 
-// Estructura que define un nodo
-
-type Node struct {
-	label     int             // identificador
-	visited   bool            // ha sido visitado?
-	neighbors map[int][]*Node // diccionario que contiene los vecinos de este nodo
-}
-
-// Estructura que define un grafo
-
-type Graph struct {
-	nodes map[int]*Node // diccionario que contiene todos los nodos del grafo
-}
-
 // Estas funciones permiten el uso de la estructura de datos "Stack" en Go
 
 type (
@@ -69,88 +55,6 @@ func (this *Stack) Push(value interface{}) {
 
 //
 
-// Funcion que realiza el recorrido de profundidad
-// Va agregando los nodos que visita a un diccionario
-
-func (g *Graph) DFS(n *Node) int {
-	n.visited = true
-
-	if len(n.neighbors) != 0 {
-		for _, v := range n.neighbors[n.label] {
-			if v.visited == false {
-				sccDic[g.DFS(v)] = v
-			}
-		}
-	}
-
-	return n.label
-}
-
-// Se hace un recorrido de profundidad, agregando cada nodo visitado al stack
-
-func (g *Graph) FOrder(n *Node, s *Stack) {
-	n.visited = true
-
-	if len(n.neighbors) != 0 {
-		for _, v := range n.neighbors[n.label] {
-			if v.visited == false {
-				g.FOrder(v, s)
-			}
-		}
-	}
-
-	s.Push(n.label)
-}
-
-// Funcion que se encarga de procesar los SCC y determinar si 2sat tiene solucion o no
-
-func (g *Graph) GetSCC(bytes []byte) {
-	solution = 1 // inicialmente, el problema tiene solucion
-
-	sccDic = make(map[int]*Node) // inicializo el diccionario de SCC
-
-	start := time.Now()
-
-	s := NewStack()
-
-	// Se colocan los nodos en el stack
-	for label := range g.nodes {
-		if g.nodes[label].visited == false {
-			g.FOrder(g.nodes[label], s)
-		}
-	}
-
-	// Se crea el grafo inverso
-	gr := CreateGraph(bytes, true)
-
-	for s.Len() > 0 {
-		v := (s.Pop()).(int)
-
-		if gr.nodes[v].visited == false {
-			sccDic[gr.DFS(gr.nodes[v])] = gr.nodes[v]
-
-			// x y ~n existen en el mismo SCC? Entonces no tiene solucion
-			if sccDic[v] != nil && sccDic[v*-1] != nil {
-				solution = 0
-			}
-
-			sccDic = nil                 // Se limpia el diccionario
-			sccDic = make(map[int]*Node) // Se inicializa de nuevo
-		}
-	}
-
-	if solution == 1 {
-		fmt.Println("Se puede resolver")
-	} else {
-		fmt.Println("No se puede resolver")
-	}
-
-	var elapsed time.Duration
-	elapsed = time.Since(start)
-
-	fmt.Printf("SCC time %s\n", elapsed)
-}
-
 // Funcion que se encarga de leer el archivo
 
 func GetFile(n string) []byte {
@@ -182,97 +86,13 @@ func GetFile(n string) []byte {
 	return buffer
 }
 
-// Funcion que devuelve un nodo si existe un nodo con este id en el grafo
+var adj map[int][]int
+var adjInv map[int][]int
+var visited map[int]bool
+var visitedInv map[int]bool
 
-func (g *Graph) GetNode(l int) *Node {
-
-	if g.nodes[l] != nil {
-		return g.nodes[l]
-	}
-
-	return nil
-}
-
-// Funcion que inicializa un nodo
-
-func CreateNode(l int) *Node {
-	n := new(Node)
-	n.label = l
-	n.neighbors = make(map[int][]*Node)
-	return n
-}
-
-// Funcion que agrega un nodo al grafo
-
-func (g *Graph) AddNode(n *Node) {
-	g.nodes[n.label] = n
-}
-
-// Funcion que agrega una arista entre un nodo y otro
-
-func (g *Graph) AddEdge(ini *Node, fin *Node) {
-	ini.neighbors[ini.label] = append(ini.neighbors[ini.label], fin)
-}
-
-// Funcion que se encarga de crear un grafo
-// r -> true crea el grafo inverso
-
-func CreateGraph(b []byte, r bool) *Graph {
-	nodes := strings.Fields(string(b))
-
-	start := time.Now()
-
-	g := new(Graph)
-	g.nodes = make(map[int]*Node)
-
-	for i := 0; i < len(nodes); i += 2 {
-		labelIni, err := strconv.Atoi(nodes[i])
-		labelFin, err2 := strconv.Atoi(nodes[i+1])
-
-		if err != nil || err2 != nil {
-			fmt.Println("ERROR CREATING THE GRAPH")
-			return nil
-		}
-
-		var nini *Node
-		var nfin *Node
-
-		if g.GetNode(labelIni) == nil {
-			nini = CreateNode(labelIni)
-			g.AddNode(nini)
-		} else {
-			nini = g.GetNode(labelIni)
-		}
-		if g.GetNode(labelFin) == nil {
-			nfin = CreateNode(labelFin)
-			g.AddNode(nfin)
-		} else {
-			nfin = g.GetNode(labelFin)
-		}
-
-		if r == false {
-			g.AddEdge(nini, nfin)
-		} else {
-			g.AddEdge(nfin, nini)
-		}
-
-		if i%100000 == 0 && !r {
-			fmt.Printf("%8d - Creating Normal...\n", len(g.nodes))
-		} else if i%100000 == 0 && r {
-			fmt.Printf("%8d - Creating Reverse...\n", len(g.nodes))
-		}
-	}
-
-	var elapsed time.Duration
-	elapsed = time.Since(start)
-
-	fmt.Printf("Creation time %s\n", elapsed)
-
-	return g
-}
-
-var sccDic map[int]*Node // diccionario temporal de SCC
-var solution int         // variable que determina si el problema tiene solucion o no
+var scc map[int]int
+var counter int
 
 func main() {
 	var n string
@@ -280,12 +100,149 @@ func main() {
 		n = os.Args[1]
 	}
 
+	s := NewStack()
+
 	// Leo el archivo y obtengo los datos
 	bytes := GetFile(n)
 
-	// Creo el grafo
-	gr := CreateGraph(bytes, false)
+	words := strings.Fields(string(bytes))
 
-	// Analizo los SCC para saber si el problema tiene o no solucion
-	gr.GetSCC(bytes)
+	var a []int
+	var b []int
+
+	for i := 0; i < len(words); i += 2 {
+		toA, err := strconv.Atoi(words[i])
+		toB, err2 := strconv.Atoi(words[i+1])
+
+		if err != nil || err2 != nil {
+			fmt.Println("ERROR GETTING DATA")
+			return
+		}
+
+		a = append(a, toA)
+		b = append(b, toB)
+	}
+
+	adj = make(map[int][]int)
+	adjInv = make(map[int][]int)
+	visited = make(map[int]bool)
+	visitedInv = make(map[int]bool)
+	scc = make(map[int]int)
+
+	counter = 1
+
+	cantVars := make(map[int]bool)
+
+	for i := 0; i < len(words); i++ {
+		sti, err := strconv.Atoi(words[i])
+
+		if err != nil {
+			fmt.Println("ERROR GETTING DATA")
+			return
+		}
+
+		if cantVars[sti] == false && sti > 0 {
+			cantVars[sti] = true
+		}
+	}
+
+	fmt.Println("CANTIDAD DE VARIABLES -> ", len(cantVars))
+
+	SAT(len(cantVars), len(a), a, b, s)
+
+	// fmt.Print(a[0], b[0])
+}
+
+func SAT(n int, m int, a []int, b []int, s *Stack) {
+	for i := 0; i < m; i++ {
+		if a[i] > 0 && b[i] > 0 {
+			addEdges(a[i]+n, b[i])
+			addEdgesInverse(a[i]+n, b[i])
+			addEdges(b[i]+n, a[i])
+			addEdgesInverse(b[i]+n, a[i])
+		} else if a[i] > 0 && b[i] < 0 {
+			addEdges(a[i]+n, n-b[i])
+			addEdgesInverse(a[i]+n, n-b[i])
+			addEdges(-b[i], a[i])
+			addEdgesInverse(-b[i], a[i])
+		} else if a[i] < 0 && b[i] > 0 {
+			addEdges(-a[i], b[i])
+			addEdgesInverse(-a[i], b[i])
+			addEdges(b[i]+n, n-a[i])
+			addEdgesInverse(b[i]+n, n-a[i])
+		} else {
+			addEdges(-a[i], n-b[i])
+			addEdgesInverse(-a[i], n-b[i])
+			addEdges(-b[i], n-a[i])
+			addEdgesInverse(-b[i], n-a[i])
+		}
+	}
+
+	for i := 1; i <= 2*n; i++ {
+		if !visited[i] {
+			dfsFirst(i, s)
+		}
+	}
+
+	for {
+		if s.Len() == 0 {
+			break
+		}
+		n = (s.Peek()).(int)
+		s.Pop()
+
+		if !visitedInv[n] {
+			dfsSecond(n, s)
+			counter++
+		}
+	}
+
+	for i := 1; i <= n; i++ {
+		// fmt.Println(scc[i], " y ", scc[i+n])
+		if scc[i] == scc[i+n] {
+			fmt.Println("No tiene solucion")
+			return
+		}
+	}
+
+	// fmt.Println("ADJ MAP -> ", adj)
+
+	fmt.Println("Tiene solucion")
+	return
+}
+
+func dfsFirst(u int, s *Stack) {
+	if visited[u] {
+		return
+	}
+
+	visited[u] = true
+
+	for i := 0; i < len(adj[u]); i++ {
+		dfsFirst(adj[u][i], s)
+	}
+
+	s.Push(u)
+}
+
+func dfsSecond(u int, s *Stack) {
+	if visitedInv[u] {
+		return
+	}
+
+	visitedInv[u] = true
+
+	for i := 0; i < len(adjInv[u]); i++ {
+		dfsSecond(adjInv[u][i], s)
+	}
+
+	scc[u] = counter
+}
+
+func addEdges(a int, b int) {
+	adj[a] = append(adj[a], b)
+}
+
+func addEdgesInverse(a int, b int) {
+	adjInv[b] = append(adjInv[b], a)
 }
