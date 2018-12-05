@@ -9,40 +9,36 @@ import (
 	"strings"
 )
 
-type Vertice struct {
-	Id       int
-	Edges    []int
-	Explored bool
+type Node struct {
+	label   int
+	edges   []int
+	visited bool
 }
 
-func (v Vertice) String() string {
-	return fmt.Sprintf("id:\t%d\nodos: %v\n\n", v.Id, v.Edges)
+func (n Node) String() string {
+	return fmt.Sprintf("id:\t%d\nodos: %v\n\n", n.label, n.edges)
 }
 
-func (v *Vertice) AddEdge(i int) {
-	v.Edges = append(v.Edges, i)
+func (n *Node) AddEdge(i int) {
+	n.edges = append(n.edges, i)
 }
 
-type Boss struct {
-	Id       int
-	Miembros map[int]bool
+type Group struct {
+	label   int
+	members map[int]bool
 }
 
-func (v Boss) String() string {
-	return fmt.Sprintf("id:\t%d\n miembros: %v\n\n", v.Id, v.Miembros)
+func (g *Group) AddMember(i int) {
+	g.members[i] = true
 }
 
-func (v *Boss) AddMember(i int) {
-	v.Miembros[i] = true
-}
+var mapF = make(map[int]*Node)
+var mapB = make(map[int]*Node)
+var keyMap = make(map[int]int)
+var ordenMap = make(map[int]int)
+var mainMap = make(map[int]*Group)
 
-var VerticeMap_f = make(map[int]*Vertice)
-var VerticeMap_b = make(map[int]*Vertice)
-var Atras_Key = make(map[int]int)
-var m_Orden_Map = make(map[int]int)
-var Main_map = make(map[int]*Boss)
-
-var s *Boss
+var s *Group
 
 var t int
 
@@ -54,27 +50,27 @@ func main() {
 		name = os.Args[1]
 	}
 
-	renombrarFile(name)
+	ReadFile(name)
 
-	bucleDFS(VerticeMap_b, Atras_Key, 1)
-	bucleDFS(VerticeMap_f, m_Orden_Map, 2)
+	DFSLoop(mapB, keyMap, 1)
+	DFSLoop(mapF, ordenMap, 2)
 
-	for _, v := range Main_map {
-		for w := range v.Miembros {
-			_, ok := v.Miembros[w*-1]
+	for _, v := range mainMap {
+		for w := range v.members {
+			_, ok := v.members[w*-1]
 
 			if ok {
-				fmt.Println("La satisfacibilidad es 0")
+				fmt.Println("No tiene solucion")
 				os.Exit(1)
 			}
 		}
 	}
 
-	fmt.Println("La satisfacibilidad es 1")
+	fmt.Println("Tiene solucion")
 
 }
 
-func renombrarFile(filename string) {
+func ReadFile(filename string) {
 
 	k := 0
 
@@ -90,27 +86,27 @@ func renombrarFile(filename string) {
 		numOfRows, err := strconv.Atoi(scanner.Text())
 
 		if err != nil {
-			log.Fatalf("no se pudo comvertir el número: %v\n", err)
+			log.Fatalf("No se pudo convertir el numero: %v\n", err)
 		}
 
 		for i := 1; i <= numOfRows; i++ {
 
 			ni := i * -1
-			vf := &Vertice{i, []int{}, false}
-			VerticeMap_f[i] = vf
+			vf := &Node{i, []int{}, false}
+			mapF[i] = vf
 
-			nvf := &Vertice{ni, []int{}, false}
-			VerticeMap_f[ni] = nvf
+			nvf := &Node{ni, []int{}, false}
+			mapF[ni] = nvf
 
-			vb := &Vertice{i, []int{}, false}
-			VerticeMap_b[i] = vb
+			vb := &Node{i, []int{}, false}
+			mapB[i] = vb
 
-			nvb := &Vertice{ni, []int{}, false}
-			VerticeMap_b[ni] = nvb
+			nvb := &Node{ni, []int{}, false}
+			mapB[ni] = nvb
 
-			Atras_Key[k] = i
+			keyMap[k] = i
 			k++
-			Atras_Key[k] = ni
+			keyMap[k] = ni
 			k++
 		}
 	}
@@ -123,34 +119,34 @@ func renombrarFile(filename string) {
 		sat2, err := strconv.Atoi(thisLine[1])
 
 		if err != nil {
-			fmt.Print("No se puede conventir el número(Can't convert the number): %v\n", err)
+			fmt.Print("No se puede conventir el numero: %v\n", err)
 			return
 		}
 
-		nsat1V, ok := VerticeMap_f[sat1*-1]
+		nsat1V, ok := mapF[sat1*-1]
 
 		if !ok {
-			log.Fatal("Couldn't Find it (No puede ser encontrado): ", sat1*-1)
+			log.Fatal("No puede ser encontrado: ", sat1*-1)
 		}
-		nsat2V, ok := VerticeMap_f[sat2*-1]
+		nsat2V, ok := mapF[sat2*-1]
 
 		if !ok {
-			log.Fatal("Couldn't Find it(No puede ser encontrado): ", sat1*-1)
+			log.Fatal("No puede ser encontrado: ", sat1*-1)
 		}
 
 		nsat1V.AddEdge(sat2)
 		nsat2V.AddEdge(sat1)
 
-		sat1V, ok := VerticeMap_b[sat1]
+		sat1V, ok := mapB[sat1]
 
 		if !ok {
-			log.Fatal("No puede ser encontrado(Couldn't Find it): ", sat1)
+			log.Fatal("No puede ser encontrado: ", sat1)
 		}
 
-		sat2V, ok := VerticeMap_b[sat2]
+		sat2V, ok := mapB[sat2]
 
 		if !ok {
-			log.Fatal("No puede ser encontrado(Couldn't Find it): ", sat2)
+			log.Fatal("No puede ser encontrado: ", sat2)
 		}
 
 		sat1V.AddEdge(sat2 * -1)
@@ -163,7 +159,7 @@ func renombrarFile(filename string) {
 
 }
 
-func bucleDFS(graph map[int]*Vertice, orderer map[int]int, pass int) {
+func DFSLoop(graph map[int]*Node, orderer map[int]int, pass int) {
 
 	for i := len(orderer); i > 0; i-- {
 
@@ -171,11 +167,11 @@ func bucleDFS(graph map[int]*Vertice, orderer map[int]int, pass int) {
 
 		if ok {
 
-			if !w.Explored {
+			if !w.visited {
 
 				if pass == 2 {
-					s = &Boss{w.Id, make(map[int]bool)}
-					Main_map[s.Id] = s
+					s = &Group{w.label, make(map[int]bool)}
+					mainMap[s.label] = s
 				}
 
 				DFS(graph, w, pass)
@@ -185,26 +181,26 @@ func bucleDFS(graph map[int]*Vertice, orderer map[int]int, pass int) {
 	}
 }
 
-func DFS(graph map[int]*Vertice, i *Vertice, pass int) {
+func DFS(graph map[int]*Node, i *Node, pass int) {
 
-	i.Explored = true
+	i.visited = true
 
 	if pass == 2 {
-		s.AddMember(i.Id)
+		s.AddMember(i.label)
 	}
 
-	for _, v := range i.Edges {
+	for _, v := range i.edges {
 
 		Vertice := graph[v]
 
-		if !Vertice.Explored {
+		if !Vertice.visited {
 			DFS(graph, Vertice, pass)
 		}
 	}
 
 	if pass == 1 {
 		t++
-		m_Orden_Map[t] = i.Id
+		ordenMap[t] = i.label
 	}
 
 }
