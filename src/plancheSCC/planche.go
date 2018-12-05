@@ -58,11 +58,15 @@ func (g *graph) resetVisited() {
 	}
 }
 
+/*
+
 func (g *graph) showGraph() {
 	for k, v := range g.nodes {
 		fmt.Printf("Node %d (SCC ID#: %d):\nEdges: %v\nBackwards Edges: %v\n\n", k, v.sccID, v.edges, v.rEdges)
 	}
 }
+
+*/
 
 func (g *graph) createFinishingOrder() []*node {
 	g.resetVisited()
