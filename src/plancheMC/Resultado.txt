@@ -1,0 +1,3 @@
+El menor resultado del algoritmo dio 17.
+
+En promedio, suele dar entre 20 y 22
